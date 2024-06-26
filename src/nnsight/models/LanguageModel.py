@@ -21,6 +21,7 @@ from ..intervention import InterventionProxy
 from ..util import WrapperModule
 from . import NNsight
 from .mixins import GenerationMixin, RemoteableMixin
+from .mixins.Tokenization import TokenizationMixin
 
 
 class TokenIndexer:
@@ -106,7 +107,7 @@ class LanguageModelProxy(InterventionProxy):
         return self.token
 
 
-class LanguageModel(GenerationMixin, RemoteableMixin, NNsight):
+class LanguageModel(GenerationMixin, TokenizationMixin, RemoteableMixin, NNsight):
     """LanguageModels are NNsight wrappers around transformers language models.
 
     Inputs can be in the form of:
@@ -139,7 +140,7 @@ class LanguageModel(GenerationMixin, RemoteableMixin, NNsight):
         automodel: Type[AutoModel] = AutoModelForCausalLM,
         **kwargs,
     ) -> None:
-        self.tokenizer: PreTrainedTokenizer = tokenizer
+        self._tokenizer: PreTrainedTokenizer = tokenizer
         self._model: PreTrainedModel = None
         self.automodel = (
             automodel
@@ -161,7 +162,7 @@ class LanguageModel(GenerationMixin, RemoteableMixin, NNsight):
             repo_id, **kwargs
         )
 
-        if self.tokenizer is None:
+        if self._tokenizer is None:
             if tokenizer_kwargs is None:
                 tokenizer_kwargs = {}
             kwarg_pad = tokenizer_kwargs.pop("padding_side", None)
@@ -170,10 +171,10 @@ class LanguageModel(GenerationMixin, RemoteableMixin, NNsight):
                     "NNsight LanguageModel requires padding_side='left' for tokenizers, setting it to 'left'"
                 )
 
-            self.tokenizer = AutoTokenizer.from_pretrained(
+            self._tokenizer = AutoTokenizer.from_pretrained(
                 repo_id, config=config, padding_side="left", **tokenizer_kwargs
             )
-            self.tokenizer.pad_token = self.tokenizer.eos_token
+            self._tokenizer.pad_token = self._tokenizer.eos_token
 
         if self._model is None:
 
@@ -215,9 +216,9 @@ class LanguageModel(GenerationMixin, RemoteableMixin, NNsight):
 
         if not isinstance(inputs[0], str):
             inputs = [{"input_ids": ids} for ids in inputs]
-            return self.tokenizer.pad(inputs, return_tensors="pt", **kwargs)
+            return self._tokenizer.pad(inputs, return_tensors="pt", **kwargs)
 
-        return self.tokenizer(inputs, return_tensors="pt", padding=True, **kwargs)
+        return self._tokenizer(inputs, return_tensors="pt", padding=True, **kwargs)
 
     def _prepare_inputs(
         self,

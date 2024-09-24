@@ -424,9 +424,12 @@ class InterventionProtocol(Protocol):
                 # If count matches call_iter, time to inject value into node.
                 if call_iter != intervention_handler.count(
                     intervention_node_name
-                ):
+                ) and call_iter != -1:
 
                     continue
+
+                if call_iter == -1:
+                    intervention_handler.graph.soft_reset()
 
                 value = activations
 

@@ -126,6 +126,15 @@ class Tracer(GraphBasedContext, RemoteMixin, BridgeMixin, EditMixin):
 
         self.model._envoy.next(increment=increment, propagate=True)
 
+    def all(self) -> None:
+        """Increments call_iter of all module Envoys. Useful when doing iterative/generative runs.
+
+        Args:
+            increment (int): How many call_iter to increment at once. Defaults to 1.
+        """
+
+        self.model._envoy.all(propagate=True)
+
     ##### BACKENDS ###############################
 
     def local_backend_execute(self) -> Graph:

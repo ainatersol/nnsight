@@ -70,6 +70,16 @@ class Graph:
         for node in self.nodes.values():
             node.reset()
 
+    def soft_reset(self) -> None:
+        """Resets the Graph to prepare for a new execution of the Graph.
+        Calls `.reset()` on all Nodes.
+        """
+
+        # Reset Nodes individually.
+        for node in self.nodes.values():
+            if node.executed():
+                node.reset()
+
     def execute(self) -> None:
         """Executes operations of `Graph`.
 

@@ -216,6 +216,16 @@ class Envoy:
             self._fake_outputs.append(output)
             self._fake_inputs.append(input)
 
+    def all(self, propagate: bool = False) -> Envoy:
+
+        self._call_iter = -1
+
+        if propagate:
+            for envoy in self._sub_envoys:
+                envoy.all()
+
+        return self
+
     def next(self, increment: int = 1, propagate: bool = False) -> Envoy:
 
         self._call_iter += increment

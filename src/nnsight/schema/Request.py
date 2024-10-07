@@ -1,5 +1,6 @@
 from __future__ import annotations
-
+import zlib
+import msgspec
 import json
 from datetime import datetime
 from typing import TYPE_CHECKING, Dict, List, Union
@@ -57,10 +58,32 @@ class StreamValueModel(BaseModel):
     
     value: ValueTypes
     
-    def deserialize(self, model:NNsight):
+    @model_serializer(mode="wrap")
+    def serialize_model(self, handler):
+
+        data = handler(self)
         
+        data = msgspec.json.encode(data)
+        
+        data = zlib.compress(data)
+
+        return data
+    
+    @classmethod
+    def deserialize(cls, data:bytes | Dict, model:NNsight, _msgspec:bool=False, _zlib:bool=False):
+        
+        if _zlib:
+            
+            data = zlib.decompress(data)
+            
+        if _msgspec:
+            
+            data = msgspec.json.decode(data)
+            
+        data = StreamValueModel(**data)
+            
         handler = DeserializeHandler(model=model)
         
-        return try_deserialize(self.value, handler)
+        return try_deserialize(data.value, handler)
                 
         
